@@ -61,7 +61,8 @@ def process_command(commands, client: Client, message: Message, command_type):
     except Exception as e:
         reply.edit_text(
             TEMPLATE_ERROR.format(
-                input=html.escape(commands), output=html.escape(str(e))
+                input=html.escape(commands),
+                output=html.escape(str(e) or "Unknown error"),
             )
         )
 
