@@ -24,24 +24,14 @@ def start(client: Client, message: Message):
 
 
 TEMPLATE_CURL_RESPONSE = """
-Input:
-```bash
-{}
-```
-
-Output:
-```
-{}
-```
-{}
+Input: ```bash\n{}```
+Output: ```{}```{}
 """
 
 
 TEMPLATE_CURL_ERROR = """
-Error:
-```
-{}
-```
+Input: ```bash\n{}```
+Error: ```{}```
 """
 
 
@@ -52,17 +42,20 @@ def curl(client: Client, message: Message):
     if len(args) == 0:
         message.reply_text("Usage: `/curl (args)`")
         return
-    url = " ".join(args)
+    commands = ["curl"] + args
     try:
-        result = subprocess.run(["curl", url], capture_output=True, text=True)
+        result = subprocess.run(
+            commands,
+            text=True,
+            capture_output=True,
+        )
         # check if error
         if result.returncode != 0:
-            message.reply_text(TEMPLATE_CURL_ERROR.format(result.stderr))
-            return
+            raise Exception(result.stderr)
 
         message.reply_text(
             TEMPLATE_CURL_RESPONSE.format(
-                "curl " + url,
+                " ".join(commands),
                 result.stdout[:3096],
                 (
                     ("+ " + str(len(result.stdout[3096:])) + " more")
@@ -72,7 +65,7 @@ def curl(client: Client, message: Message):
             )
         )
     except Exception as e:
-        message.reply_text(TEMPLATE_CURL_ERROR.format(str(e)))
+        message.reply_text(TEMPLATE_CURL_ERROR.format(" ".join(commands), str(e)))
 
 
 app.run()
