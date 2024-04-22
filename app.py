@@ -76,7 +76,7 @@ def curl(client: Client, message: Message):
 
         reply.edit_text(
             TEMPLATE_RESPONSE.format(
-                commands,
+                commands[:512] + "..." if len(commands) > 512 else commands,
                 result.stdout[:3096],
                 (
                     ("+ " + str(len(result.stdout[3096:])) + " more")
