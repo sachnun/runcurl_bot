@@ -24,14 +24,27 @@ def start(client: Client, message: Message):
 
 
 TEMPLATE_CURL_RESPONSE = """
-Input: ```bash\n{}```
-Output: ```{}```{}
+Input: 
+```bash
+{}
+```
+Output: 
+```
+{}
+```
+{}
 """
 
 
 TEMPLATE_CURL_ERROR = """
-Input: ```bash\n{}```
-Error: ```{}```
+Input: 
+```bash
+{}
+```
+Error: 
+```
+{}
+```
 """
 
 
