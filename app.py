@@ -1,5 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
+from templates import TEMPLATE_RESPONSE, TEMPLATE_ERROR
 from dotenv import load_dotenv
 import os
 import subprocess
@@ -24,32 +25,6 @@ app = Client("bot_session", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKE
 @app.on_message(filters.command("start"))
 def start(client: Client, message: Message):
     message.reply_text("Its working!")
-
-
-TEMPLATE_RESPONSE = """
-Input: 
-```
-{input}
-```
-Output: 
-```
-{output}
-``` {more}
-Done in {done:.2f} seconds.
-"""
-
-
-TEMPLATE_ERROR = """
-Input: 
-```
-{input}
-```
-
-Error: 
-```
-{output}
-```
-"""
 
 
 def process_command(commands, client: Client, message: Message, command_type):
