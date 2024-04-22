@@ -3,6 +3,7 @@ from pyrogram.types import Message
 from dotenv import load_dotenv
 import os
 import subprocess
+import shlex
 
 import logging
 
@@ -55,10 +56,12 @@ def curl(client: Client, message: Message):
     if len(args) == 0:
         message.reply_text("Usage: `/curl (args)`")
         return
-    commands = ["curl"] + args
+    commands = "curl " + " ".join(args)
+
     try:
+        args = shlex.split(commands)
         result = subprocess.run(
-            commands,
+            args,
             text=True,
             capture_output=True,
         )
@@ -68,7 +71,7 @@ def curl(client: Client, message: Message):
 
         message.reply_text(
             TEMPLATE_CURL_RESPONSE.format(
-                " ".join(commands),
+                commands,
                 result.stdout[:3096],
                 (
                     ("+ " + str(len(result.stdout[3096:])) + " more")
@@ -78,7 +81,7 @@ def curl(client: Client, message: Message):
             )
         )
     except Exception as e:
-        message.reply_text(TEMPLATE_CURL_ERROR.format(" ".join(commands), str(e)))
+        message.reply_text(TEMPLATE_CURL_ERROR.format(commands, e))
 
 
 app.run()
