@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import os
 import subprocess
 import shlex
+import io
+import time
 
 import logging
 
@@ -24,7 +26,7 @@ def start(client: Client, message: Message):
     message.reply_text("Its working!")
 
 
-TEMPLATE_CURL_RESPONSE = """
+TEMPLATE_RESPONSE = """
 Input: 
 ```bash
 {}
@@ -37,7 +39,7 @@ Output:
 """
 
 
-TEMPLATE_CURL_ERROR = """
+TEMPLATE_ERROR = """
 Input: 
 ```bash
 {}
@@ -73,7 +75,7 @@ def curl(client: Client, message: Message):
             raise Exception(result.stderr)
 
         reply.edit_text(
-            TEMPLATE_CURL_RESPONSE.format(
+            TEMPLATE_RESPONSE.format(
                 commands,
                 result.stdout[:3096],
                 (
@@ -83,8 +85,14 @@ def curl(client: Client, message: Message):
                 ),
             )
         )
+
+        if len(result.stdout) > 3096:
+            with io.BytesIO(str.encode(result.stdout)) as out_file:
+                out_file.name = "curl_output_" + str(time.time()) + ".txt"
+                message.reply_document(out_file, reply_to_message_id=reply.id)
+
     except Exception as e:
-        reply.edit_text(TEMPLATE_CURL_ERROR.format(commands, e))
+        reply.edit_text(TEMPLATE_ERROR.format(commands, e))
 
 
 # bash command <args>
@@ -109,7 +117,7 @@ def bash(client: Client, message: Message):
             raise Exception(result.stderr)
 
         reply.edit_text(
-            TEMPLATE_CURL_RESPONSE.format(
+            TEMPLATE_RESPONSE.format(
                 commands,
                 result.stdout[:3096],
                 (
@@ -120,7 +128,7 @@ def bash(client: Client, message: Message):
             )
         )
     except Exception as e:
-        reply.edit_text(TEMPLATE_CURL_ERROR.format(commands, e))
+        reply.edit_text(TEMPLATE_ERROR.format(commands, e))
 
 
 app.run()
