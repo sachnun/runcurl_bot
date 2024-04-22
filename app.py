@@ -6,7 +6,7 @@ import subprocess
 import shlex
 import io
 import time
-
+import html
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -28,107 +28,91 @@ def start(client: Client, message: Message):
 
 TEMPLATE_RESPONSE = """
 Input: 
-```bash
-{}
+```
+{input}
 ```
 Output: 
 ```
-{}
-```
-{}
+{output}
+``` {more}
+Done in {done:.2f} seconds.
 """
 
 
 TEMPLATE_ERROR = """
 Input: 
-```bash
-{}
 ```
+{input}
+```
+
 Error: 
 ```
-{}
+{output}
 ```
 """
 
 
-# curl command <args>
-@app.on_message(filters.command("curl"))
-def curl(client: Client, message: Message):
-    args = message.text.split(" ")[1:]
-    if len(args) == 0:
-        message.reply_text("Usage: `/curl (args)`")
-        return
-
-    commands = "curl " + " ".join(args)
-    commands = commands.replace("\\", "").replace("\n", "")
-
+def process_command(commands, client: Client, message: Message, command_type):
     reply: Message = message.reply_text("Processing...")
+    time_start = time.time()
+
     try:
         args = shlex.split(commands)
-        result = subprocess.run(
-            args,
-            text=True,
-            capture_output=True,
-        )
+        result = subprocess.run(args, text=True, capture_output=True, errors="ignore")
         # check if error
         if result.returncode != 0:
             raise Exception(result.stderr)
-
         reply.edit_text(
             TEMPLATE_RESPONSE.format(
-                commands[:512] + "..." if len(commands) > 512 else commands,
-                result.stdout[:3096],
-                (
-                    ("+ " + str(len(result.stdout[3096:])) + " more")
+                input=html.escape(commands)[:512]
+                + ("..." if len(commands) > 512 else ""),
+                output=html.escape(result.stdout[:3096]),
+                more=(
+                    ("+ " + str(len(result.stdout[3096:])) + " more\n")
                     if len(result.stdout) > 3096
                     else ""
                 ),
+                done=time.time() - time_start,
             )
         )
 
         if len(result.stdout) > 3096:
             with io.BytesIO(str.encode(result.stdout)) as out_file:
-                out_file.name = "curl_output_" + str(time.time()) + ".txt"
+                out_file.name = (
+                    f"{command_type}_output_" + str(int(time.time())) + ".txt"
+                )
                 message.reply_document(out_file, reply_to_message_id=reply.id)
 
     except Exception as e:
-        reply.edit_text(TEMPLATE_ERROR.format(commands, e))
-
-
-# bash command <args>
-@app.on_message(filters.command("bash"))
-def bash(client: Client, message: Message):
-    args = message.text.split(" ")[1:]
-    if len(args) == 0:
-        message.reply_text("Usage: `/bash (args)`")
-        return
-    commands = " ".join(args)
-    reply: Message = message.reply_text("Processing...")
-    try:
-
-        args = shlex.split(commands)
-        result = subprocess.run(
-            args,
-            text=True,
-            capture_output=True,
-        )
-        # check if error
-        if result.returncode != 0:
-            raise Exception(result.stderr)
-
         reply.edit_text(
-            TEMPLATE_RESPONSE.format(
-                commands,
-                result.stdout[:3096],
-                (
-                    ("+ " + str(len(result.stdout[3096:])) + " more")
-                    if len(result.stdout) > 3096
-                    else ""
-                ),
+            TEMPLATE_ERROR.format(
+                input=html.escape(commands), output=html.escape(str(e))
             )
         )
-    except Exception as e:
-        reply.edit_text(TEMPLATE_ERROR.format(commands, e))
+
+
+# incoming message private or group, starts with "curl <args>"
+@app.on_message(
+    filters.incoming
+    & filters.create(
+        lambda _, __, message: message.text and message.text.startswith("curl")
+    )
+)
+def curl(client: Client, message: Message):
+    commands = message.text
+    process_command(commands, client, message, "curl")
+
+
+# bash / shell command "! <args>"
+@app.on_message(
+    filters.incoming
+    & filters.create(
+        lambda _, __, message: message.text and message.text.startswith("!")
+    )
+)
+def shell(client: Client, message: Message):
+    commands = message.text[1:]
+    process_command(commands, client, message, "shell")
 
 
 app.run()
