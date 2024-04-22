@@ -85,4 +85,40 @@ def curl(client: Client, message: Message):
         message.reply_text(TEMPLATE_CURL_ERROR.format(commands, e))
 
 
+# bash command <args>
+@app.on_message(filters.command("bash"))
+def bash(client: Client, message: Message):
+    args = message.text.split(" ")[1:]
+    if len(args) == 0:
+        message.reply_text("Usage: `/bash (args)`")
+        return
+    commands = " ".join(args)
+    try:
+        reply: Message = message.reply_text("Processing...")
+
+        args = shlex.split(commands)
+        result = subprocess.run(
+            args,
+            text=True,
+            capture_output=True,
+        )
+        # check if error
+        if result.returncode != 0:
+            raise Exception(result.stderr)
+
+        reply.edit_text(
+            TEMPLATE_CURL_RESPONSE.format(
+                commands,
+                result.stdout[:3096],
+                (
+                    ("+ " + str(len(result.stdout[3096:])) + " more")
+                    if len(result.stdout) > 3096
+                    else ""
+                ),
+            )
+        )
+    except Exception as e:
+        message.reply_text(TEMPLATE_CURL_ERROR.format(commands, e))
+
+
 app.run()
