@@ -57,8 +57,9 @@ def curl(client: Client, message: Message):
         message.reply_text("Usage: `/curl (args)`")
         return
     commands = "curl " + " ".join(args)
-
     try:
+        reply: Message = message.reply_text("Processing...")
+
         args = shlex.split(commands)
         result = subprocess.run(
             args,
@@ -69,7 +70,7 @@ def curl(client: Client, message: Message):
         if result.returncode != 0:
             raise Exception(result.stderr)
 
-        message.reply_text(
+        reply.edit_text(
             TEMPLATE_CURL_RESPONSE.format(
                 commands,
                 result.stdout[:3096],
