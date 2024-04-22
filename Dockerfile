@@ -1,5 +1,5 @@
 # latest python image
-FROM python:lastest
+FROM python:latest
 
 # Set the working directory
 WORKDIR /app
