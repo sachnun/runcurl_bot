@@ -57,8 +57,8 @@ def curl(client: Client, message: Message):
         message.reply_text("Usage: `/curl (args)`")
         return
     commands = "curl " + " ".join(args)
+    reply: Message = message.reply_text("Processing...")
     try:
-        reply: Message = message.reply_text("Processing...")
 
         args = shlex.split(commands)
         result = subprocess.run(
@@ -82,7 +82,7 @@ def curl(client: Client, message: Message):
             )
         )
     except Exception as e:
-        message.reply_text(TEMPLATE_CURL_ERROR.format(commands, e))
+        reply.edit_text(TEMPLATE_CURL_ERROR.format(commands, e))
 
 
 # bash command <args>
@@ -93,8 +93,8 @@ def bash(client: Client, message: Message):
         message.reply_text("Usage: `/bash (args)`")
         return
     commands = " ".join(args)
+    reply: Message = message.reply_text("Processing...")
     try:
-        reply: Message = message.reply_text("Processing...")
 
         args = shlex.split(commands)
         result = subprocess.run(
@@ -118,7 +118,7 @@ def bash(client: Client, message: Message):
             )
         )
     except Exception as e:
-        message.reply_text(TEMPLATE_CURL_ERROR.format(commands, e))
+        reply.edit_text(TEMPLATE_CURL_ERROR.format(commands, e))
 
 
 app.run()
