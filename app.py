@@ -56,10 +56,12 @@ def curl(client: Client, message: Message):
     if len(args) == 0:
         message.reply_text("Usage: `/curl (args)`")
         return
+
     commands = "curl " + " ".join(args)
+    commands = commands.replace("\\", "").replace("\n", "")
+
     reply: Message = message.reply_text("Processing...")
     try:
-
         args = shlex.split(commands)
         result = subprocess.run(
             args,
