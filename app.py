@@ -37,21 +37,22 @@ def process_command(commands, client: Client, message: Message, command_type):
         # check if error
         if result.returncode != 0:
             raise Exception(result.stderr)
+
         reply.edit_text(
             TEMPLATE_RESPONSE.format(
                 input=html.escape(commands)[:512]
                 + ("..." if len(commands) > 512 else ""),
-                output=html.escape(result.stdout[:2096]),
+                output=html.escape(result.stdout[:3096]),
                 more=(
-                    ("+ " + str(len(result.stdout[2096:])) + " more\n")
-                    if len(result.stdout) > 2096
+                    ("+ " + str(len(result.stdout[3096:])) + " more\n")
+                    if len(result.stdout) > 3096
                     else ""
                 ),
                 done=time.time() - time_start,
             )
         )
 
-        if len(result.stdout) > 2096:
+        if len(result.stdout) > 3096:
             with io.BytesIO(str.encode(result.stdout)) as out_file:
                 out_file.name = (
                     f"{command_type}_output_" + str(int(time.time())) + ".txt"
@@ -62,7 +63,10 @@ def process_command(commands, client: Client, message: Message, command_type):
         reply.edit_text(
             TEMPLATE_ERROR.format(
                 input=html.escape(commands),
-                output=html.escape(str(e) or "Unknown error"),
+                output=html.escape(
+                    str(e)[:3800] + ("..." if len(str(e)) > 3800 else "")
+                )
+                or "No output",
             )
         )
 
