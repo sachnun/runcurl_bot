@@ -41,17 +41,17 @@ def process_command(commands, client: Client, message: Message, command_type):
             TEMPLATE_RESPONSE.format(
                 input=html.escape(commands)[:512]
                 + ("..." if len(commands) > 512 else ""),
-                output=html.escape(result.stdout[:3096]),
+                output=html.escape(result.stdout[:2096]),
                 more=(
-                    ("+ " + str(len(result.stdout[3096:])) + " more\n")
-                    if len(result.stdout) > 3096
+                    ("+ " + str(len(result.stdout[2096:])) + " more\n")
+                    if len(result.stdout) > 2096
                     else ""
                 ),
                 done=time.time() - time_start,
             )
         )
 
-        if len(result.stdout) > 3096:
+        if len(result.stdout) > 2096:
             with io.BytesIO(str.encode(result.stdout)) as out_file:
                 out_file.name = (
                     f"{command_type}_output_" + str(int(time.time())) + ".txt"
